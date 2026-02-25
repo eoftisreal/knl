@@ -54,7 +54,8 @@ fi
 make "$DEFCONFIG"
 
 echo "Building Kernel..."
-make -j$(nproc) Image.gz-dtb
+# Disable ccache to avoid dependency issues in minimal environments
+make -j$(nproc) CCACHE= Image.gz-dtb
 
 if [ -f "$ARTIFACT" ]; then
     echo "Build Successful!"
