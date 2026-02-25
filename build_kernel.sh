@@ -51,10 +51,10 @@ if ! command -v python &> /dev/null; then
     sudo ln -s $(which python3) /usr/bin/python || true
 fi
 
-make "$DEFCONFIG"
+# Disable ccache to avoid dependency issues in minimal environments
+make "$DEFCONFIG" CCACHE=
 
 echo "Building Kernel..."
-# Disable ccache to avoid dependency issues in minimal environments
 make -j$(nproc) CCACHE= Image.gz-dtb
 
 if [ -f "$ARTIFACT" ]; then
