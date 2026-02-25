@@ -1,0 +1,224 @@
+I want to u create a custom kernal
+
+Technical Report Target: Samsung Galaxy J7 2016 (SM-J710FN / j7xelte) Goal: Custom Kernel + RTL8192EU Monitor Mode Support ROM: crDroid 6.27 (Android 10)
+
+Device & ROM Environment
+Device Codename: j7xelte SoC: Exynos 7870 Architecture: arm64 (aarch64) ROM: crDroidAndroid-10.0-20220328-j7xelte-v6.27 Android Version: 10 Kernel Version (running): 3.18.140 Recovery: OrangeFox R11.0 Root: Magisk
+
+Objective
+Build a custom kernel for:
+
+Kernel base: Linux 3.18.140
+
+Android base: 10 (Lineage 17.1 family)
+
+Enable:
+
+CONFIG_CFG80211
+
+CONFIG_MAC80211
+
+CONFIG_WIRELESS
+
+Add external RTL8192EU driver
+
+Enable:
+
+Monitor mode
+
+Packet injection
+
+Build driver initially as external module
+
+Preserve full device functionality (RIL, camera, WiFi, etc.)
+
+Kernel Source Requirements Must Match:
+Android 10 base (Lineage 17.1 equivalent)
+
+Kernel version: 3.18.140
+
+Device: j7xelte
+
+Defconfig present in: arch/arm64/configs/
+
+Repository Candidate:
+
+https://github.com/samsungexynos7870/android_kernel_samsung_exynos7870
+
+Required Branch (Strict):
+
+lineage-17.1 OR
+
+android-10 OR
+
+crdroid-10
+
+Must NOT Use:
+
+lineage-18.1-lts
+
+master
+
+stock Samsung OSS branch
+
+any Android 11+ branch
+
+Validation Steps Required:
+
+After checkout:
+
+git branch -a
+
+git tag
+
+Verify Makefile shows: VERSION = 3 PATCHLEVEL = 18 SUBLEVEL = 140
+
+Confirm defconfig exists: arch/arm64/configs/j7xelte_defconfig (or correct variant if different)
+
+Toolchain Requirements
+Mandatory:
+
+GCC 4.9 aarch64-linux-android-4.9
+
+Environment variables:
+
+ARCH=arm64 CROSS_COMPILE=aarch64-linux-android-
+
+Modern clang or GCC 8+ not permitted.
+
+Reason: Kernel 3.18 compatibility and vermagic stability.
+
+Build Phases Phase 1A – Baseline Kernel Build
+Objective: Build completely unmodified kernel.
+
+Steps:
+
+Configure: make j7xelte_defconfig
+
+Compile: make -j$(nproc) Image.gz-dtb
+
+Verify output: arch/arm64/boot/Image.gz-dtb
+
+Confirm:
+
+Kernel version 3.18.140
+
+DTB appended
+
+No unresolved symbol warnings
+
+Size comparable to stock
+
+Boot test required before proceeding.
+
+Stop if:
+
+Bootloop
+
+WiFi broken
+
+RIL broken
+
+Camera broken
+
+Phase 1B – Enable Wireless Stack
+
+Modify .config to enable (built-in, not module):
+
+CONFIG_CFG80211=y CONFIG_MAC80211=y CONFIG_WIRELESS=y
+
+Rebuild full kernel.
+
+Boot test again.
+
+Phase 2 – Acquire RTL8192EU Driver
+
+Requirements:
+
+Kernel 3.18 compatible
+
+Uses init_timer (not timer_setup)
+
+USB version (EU variant)
+
+Monitor mode support
+
+Injection support
+
+Do NOT use:
+
+drivers/staging/rtl8192e drivers/staging/rtl8192u
+
+Reason: Incorrect chipset or incomplete support.
+
+Phase 3 – Build External Module
+
+Compile driver as external module first.
+
+Must produce: 8192eu.ko
+
+Verify:
+
+Successful build
+
+No unresolved symbols
+
+vermagic matches running kernel exactly
+
+Check:
+
+modinfo 8192eu.ko
+
+Ensure kernel version string matches.
+
+Do NOT integrate into kernel tree initially.
+
+Critical Technical Constraints
+Kernel vermagic must match exactly.
+
+CONFIG_LOCALVERSION must match ROM kernel.
+
+DTB must be appended properly.
+
+No fallback to Android 11 kernel base.
+
+No mixing branches.
+
+External driver must not require 4.x backports.
+
+Known Risks
+Samsung 3.18 tree may lack modern mac80211 backports.
+
+RTL8192EU forks often target 4.x/5.x.
+
+API mismatches expected:
+
+timer APIs
+
+skb APIs
+
+usb_alloc_coherent
+
+net_device_ops differences
+
+Heavy patching may be required.
+
+Current Status
+Environment planning complete. Kernel branch confirmation pending. No driver integration started. No baseline build validated yet.
+
+Required Next Confirmation
+Before proceeding:
+
+Tool must report:
+
+Exact repo URL
+
+Exact branch name
+
+Exact defconfig filename
+
+Confirmation of 3.18.140 in Makefile
+
+Successful baseline Image.gz-dtb build
+
+Only after that can driver work begin.
