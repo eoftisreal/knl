@@ -1,0 +1,18 @@
+diff --git a/include/ieee80211.h b/include/ieee80211.h
+index 7254530..e47513b 100644
+--- a/include/ieee80211.h
++++ b/include/ieee80211.h
+@@ -23,6 +23,13 @@
+ #ifndef WLAN_CATEGORY_FAST_BBS_TRANSITION
+ #define WLAN_CATEGORY_FAST_BBS_TRANSITION 6
+ #endif
++#ifndef WLAN_CATEGORY_WNM
++#define WLAN_CATEGORY_WNM 10
++#endif
++#ifndef WLAN_CATEGORY_WNM_UNPROTECTED
++#define WLAN_CATEGORY_WNM_UNPROTECTED 11
++#endif
++
+
+ #define CATEGORY_IS_NON_ROBUST(cat) \
+	(cat == WLAN_CATEGORY_PUBLIC \
