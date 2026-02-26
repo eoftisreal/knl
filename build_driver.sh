@@ -19,12 +19,19 @@ if [ ! -f "$KERNEL_DIR/arch/arm64/boot/Image.gz-dtb" ]; then
 fi
 
 echo "Setting up Driver Source..."
-# Always ensure we are in a clean state for the driver source
-if [ -d "$DRIVER_DIR" ]; then
-    echo "Driver directory exists. Checking state..."
-else
+
+# Validation: If directory exists but is not a git repo, wipe it.
+if [ -d "$DRIVER_DIR" ] && [ ! -d "$DRIVER_DIR/.git" ]; then
+    echo "Warning: $DRIVER_DIR exists but is not a valid git repository. Removing..."
+    rm -rf "$DRIVER_DIR"
+fi
+
+# Clone if missing
+if [ ! -d "$DRIVER_DIR" ]; then
     echo "Cloning driver repository..."
     git clone "$DRIVER_REPO" "$DRIVER_DIR"
+else
+    echo "Driver directory exists. Checking state..."
 fi
 
 # Go into driver dir
@@ -33,6 +40,7 @@ cd "$DRIVER_DIR"
 # Ensure we are on the right commit and clean
 echo "Resetting to compatible commit..."
 # Fetch the specific branch to ensure we have the commit history
+# Use --quiet to reduce noise
 git fetch origin "$DRIVER_BRANCH" || git fetch origin
 
 if ! git checkout "$DRIVER_COMMIT"; then
