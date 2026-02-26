@@ -6,6 +6,7 @@ KERNEL_DIR="android_kernel"
 TOOLCHAIN_DIR="android_kernel/toolchain"
 DRIVER_DIR="rtl8192eu"
 DRIVER_REPO="https://github.com/Mange/rtl8192eu-linux-driver.git"
+DRIVER_BRANCH="realtek-4.4.x"
 DRIVER_COMMIT="d53a23d" # March 2019, likely compatible with 3.18
 
 export ARCH=arm64
@@ -31,7 +32,16 @@ cd "$DRIVER_DIR"
 
 # Ensure we are on the right commit and clean
 echo "Resetting to compatible commit..."
-git fetch origin
+# Fetch the specific branch to ensure we have the commit history
+git fetch origin "$DRIVER_BRANCH" || git fetch origin
+
+if ! git checkout "$DRIVER_COMMIT"; then
+    echo "Commit not found. Attempting full fetch..."
+    git fetch --unshallow || true
+    git fetch --all
+    git checkout "$DRIVER_COMMIT"
+fi
+
 git reset --hard "$DRIVER_COMMIT"
 git clean -fdx
 
