@@ -18,40 +18,42 @@ if [ ! -f "$KERNEL_DIR/arch/arm64/boot/Image.gz-dtb" ]; then
 fi
 
 echo "Setting up Driver Source..."
-if [ ! -d "$DRIVER_DIR" ]; then
+# Always ensure we are in a clean state for the driver source
+if [ -d "$DRIVER_DIR" ]; then
+    echo "Driver directory exists. Checking state..."
+else
     echo "Cloning driver repository..."
     git clone "$DRIVER_REPO" "$DRIVER_DIR"
-    cd "$DRIVER_DIR"
-    echo "Checking out compatible commit..."
-    git checkout "$DRIVER_COMMIT"
-    cd ..
-else
-    echo "Driver directory exists."
 fi
+
+# Go into driver dir
+cd "$DRIVER_DIR"
+
+# Ensure we are on the right commit and clean
+echo "Resetting to compatible commit..."
+git fetch origin
+git reset --hard "$DRIVER_COMMIT"
+git clean -fdx
 
 echo "Applying Driver Patches..."
-cd "$DRIVER_DIR"
-# Check if patch is already applied to avoid error
-if grep -q "WLAN_CATEGORY_WNM" include/ieee80211.h; then
-    echo "Patch already applied."
+# We are inside DRIVER_DIR now, patch is in parent dir
+if patch -p1 < ../rtl8192eu_3.18.patch; then
+    echo "Patch applied successfully."
 else
-    if patch -p1 < ../rtl8192eu_3.18.patch; then
-        echo "Patch applied successfully."
-    else
-        echo "Failed to apply patch."
-        exit 1
-    fi
+    echo "Failed to apply patch."
+    exit 1
 fi
 
-# Fix Makefile recursion issue if present
+# Fix Makefile recursion issue
 sed -i 's/EXTRA_CFLAGS += $(ccflags-y)/#EXTRA_CFLAGS += $(ccflags-y)/' Makefile
 
 echo "Building RTL8192EU Module..."
-# Clean previous builds
+# Clean previous builds (redundant after git clean but good practice)
 make clean
 
 # Build module against the kernel source
 # We need to explicitly set KSRC to point to our kernel directory
+# DRIVER_DIR is cwd, KERNEL_DIR is ../$KERNEL_DIR
 make -j$(nproc) ARCH=arm64 CROSS_COMPILE=$CROSS_COMPILE KSRC=../$KERNEL_DIR modules
 
 if [ -f "8192eu.ko" ]; then
