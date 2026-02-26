@@ -72,7 +72,8 @@ make clean
 # Build module against the kernel source
 # We need to explicitly set KSRC to point to our kernel directory
 # DRIVER_DIR is cwd, KERNEL_DIR is ../$KERNEL_DIR
-make -j$(nproc) ARCH=arm64 CROSS_COMPILE=$CROSS_COMPILE KSRC=../$KERNEL_DIR modules
+# Disable ccache to avoid dependency issues
+make -j$(nproc) ARCH=arm64 CROSS_COMPILE=$CROSS_COMPILE KSRC=../$KERNEL_DIR CCACHE= modules
 
 if [ -f "8192eu.ko" ]; then
     echo "Module build successful!"
